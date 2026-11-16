@@ -87,7 +87,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 #scene { display: block; width: 240px; height: 148px; image-rendering: pixelated; }
 
 .textbox { height: 101px; padding: 7px 10px 0; display: flex; flex-direction: column; }
-#text { flex: 1; font-size: 16px; line-height: 19px; }
+#text { flex: 1; min-height: 0; overflow: hidden; font-size: 16px; line-height: 19px; }
 .foot { height: 18px; display: flex; align-items: center; justify-content: space-between; }
 .speaker { width: 22px; height: 18px; color: var(--accent); opacity: .35; transition: opacity .2s; }
 .speaker svg { width: 17px; height: 14px; }
