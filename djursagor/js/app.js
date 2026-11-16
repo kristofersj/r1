@@ -21,6 +21,21 @@
     try { localStorage.setItem("lang", l); } catch (e) {}
   }
 
+  // Remember where the reader was, so a reopened creation resumes on the same page.
+  function savePos(v) {
+    try { window.creationStorage && window.creationStorage.plain.setItem("pos", btoa(v)); } catch (e) {}
+    try { localStorage.setItem("pos", v); } catch (e) {}
+  }
+  async function loadPos() {
+    try {
+      if (window.creationStorage) {
+        const v = await window.creationStorage.plain.getItem("pos");
+        if (v) return atob(v);
+      }
+    } catch (e) {}
+    try { return localStorage.getItem("pos"); } catch (e) { return null; }
+  }
+
   // ---------- Audio ----------
   function audioSrc() {
     const s = S[state.story];
@@ -81,6 +96,15 @@
     return state.page < s.pages.length ? s.pages[state.page].scene : "end";
   }
 
+  // Shrink the font until the page text fits the text box.
+  function fitText(t) {
+    const sizes = [[16, 19], [15, 17], [14, 16], [13, 15], [12, 14]];
+    for (const [fs, lh] of sizes) {
+      t.style.fontSize = fs + "px"; t.style.lineHeight = lh + "px";
+      if (t.scrollHeight <= t.clientHeight + 1) return;
+    }
+  }
+
   function renderReader(dir) {
     const s = S[state.story];
     const n = s.pages.length;
@@ -89,7 +113,7 @@
 
     const t = $("text");
     if (end) {
-      t.innerHTML = "";
+      t.innerHTML = ""; t.style.fontSize = ""; t.style.lineHeight = "";
       const b = document.createElement("div");
       b.textContent = UI[state.lang].end;
       b.style.cssText = "font-size:24px;font-weight:700;margin-bottom:4px";
@@ -100,6 +124,7 @@
       t.append(b, again);
     } else {
       t.textContent = s.pages[state.page][state.lang];
+      fitText(t);
     }
 
     $("counter").textContent = end ? "♥" : `${state.page + 1}/${n}`;
@@ -127,11 +152,12 @@
 
   // ---------- Navigation ----------
   function openStory(i) {
-    state.story = i; state.page = 0;
+    state.story = i; state.page = 0; window.__endStory = S[i].id;
+    savePos(i + ":0");
     show("reader"); renderReader(1); play();
   }
   function goMenu() {
-    stop(); show("menu"); renderMenu();
+    stop(); savePos(""); show("menu"); renderMenu();
     document.documentElement.style.setProperty("--accent", "#e8734a");
   }
   function turn(dir) {
@@ -139,7 +165,7 @@
     const next = state.page + dir;
     if (next < 0) return;
     if (next > last) { goMenu(); return; }
-    state.page = next;
+    state.page = next; savePos(state.story + ":" + next);
     renderReader(dir); play();
   }
   function setLang(l) {
@@ -203,8 +229,14 @@
     const l = await loadLang();
     if (l === "sv" || l === "fr") state.lang = l;
     renderTabs(); renderMenu(); show("menu");
+    const pos = await loadPos();
+    const m = pos && pos.match(/^(\d+):(\d+)$/);
+    if (m && S[+m[1]] && +m[2] <= S[+m[1]].pages.length) {
+      state.story = +m[1]; state.page = +m[2]; state.sel = +m[1]; window.__endStory = S[state.story].id;
+      show("reader"); renderReader(0);
+    }
     // Warm the font so first paint is crisp
-    if (document.fonts && document.fonts.load) document.fonts.load('16px "Pixelify"').then(renderMenu);
+    if (document.fonts && document.fonts.load) document.fonts.load('16px "Pixelify"').then(() => (state.view === "menu" ? renderMenu() : renderReader(0)));
   })();
 
   // Expose for debugging in a desktop browser
