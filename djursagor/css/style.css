@@ -88,12 +88,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .textbox { height: 101px; padding: 7px 10px 0; display: flex; flex-direction: column; }
 #text { flex: 1; min-height: 0; overflow: hidden; font-size: 16px; line-height: 19px; }
-.foot { height: 18px; display: flex; align-items: center; justify-content: space-between; }
-.speaker { width: 22px; height: 18px; color: var(--accent); opacity: .35; transition: opacity .2s; }
-.speaker svg { width: 17px; height: 14px; }
-.speaker.playing { opacity: 1; }
-.speaker.playing .w2 { animation: blink .6s steps(1) infinite; }
-.speaker.ask { opacity: 1; animation: nudge .8s steps(2) infinite; }
+.foot { height: 18px; display: flex; align-items: center; justify-content: flex-end; }
 
 .dots { display: flex; gap: 5px; }
 .dot { width: 7px; height: 7px; background: var(--paper-2); box-shadow: 0 0 0 1px var(--shadow); }
