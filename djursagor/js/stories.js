@@ -1,5 +1,4 @@
 // Story content. Each page: scene id (see art.js) + Swedish and French text.
-// Audio files live at audio/<storyId>-<page>-<lang>.mp3 (page is 1-based).
 window.STORIES = [
   {
     id: "mira",

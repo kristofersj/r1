@@ -3,8 +3,6 @@
   const S = window.STORIES, UI = window.UI;
 
   const state = { view: "menu", lang: "sv", sel: 0, story: 0, page: 0, frame: 0 };
-  const audio = new Audio();
-  audio.preload = "auto";
 
   // ---------- Preferences (r1 creationStorage, falls back to localStorage) ----------
   async function loadLang() {
@@ -35,25 +33,6 @@
     } catch (e) {}
     try { return localStorage.getItem("pos"); } catch (e) { return null; }
   }
-
-  // ---------- Audio ----------
-  function audioSrc() {
-    const s = S[state.story];
-    if (state.page >= s.pages.length) return `audio/end-${state.lang}.mp3`;
-    return `audio/${s.id}-${state.page + 1}-${state.lang}.mp3`;
-  }
-  function play() {
-    audio.pause();
-    audio.src = audioSrc();
-    audio.currentTime = 0;
-    const p = audio.play();
-    if (p && p.catch) p.catch(() => setSpeaker("ask")); // autoplay blocked → nudge to tap
-  }
-  function stop() { audio.pause(); setSpeaker(""); }
-  function setSpeaker(mode) { $("speaker").className = "speaker" + (mode ? " " + mode : ""); }
-  audio.addEventListener("playing", () => setSpeaker("playing"));
-  audio.addEventListener("ended", () => setSpeaker(""));
-  audio.addEventListener("pause", () => { if ($("speaker").className.includes("playing")) setSpeaker(""); });
 
   // ---------- Rendering ----------
   function renderTabs() {
@@ -154,10 +133,10 @@
   function openStory(i) {
     state.story = i; state.page = 0; window.__endStory = S[i].id;
     savePos(i + ":0");
-    show("reader"); renderReader(1); play();
+    show("reader"); renderReader(1);
   }
   function goMenu() {
-    stop(); savePos(""); show("menu"); renderMenu();
+    savePos(""); show("menu"); renderMenu();
     document.documentElement.style.setProperty("--accent", "#e8734a");
   }
   function turn(dir) {
@@ -166,13 +145,13 @@
     if (next < 0) return;
     if (next > last) { goMenu(); return; }
     state.page = next; savePos(state.story + ":" + next);
-    renderReader(dir); play();
+    renderReader(dir);
   }
   function setLang(l) {
     if (l === state.lang) return;
     state.lang = l; saveLang(l); renderTabs();
     if (state.view === "menu") renderMenu();
-    else { renderReader(0); play(); }
+    else renderReader(0);
   }
 
   // ---------- Input: r1 hardware ----------
@@ -186,8 +165,7 @@
   }
   function onSide() {
     if (state.view === "menu") openStory(state.sel);
-    else if (state.page >= S[state.story].pages.length) goMenu();
-    else play(); // replay the page
+    else turn(1); // next page (or back to the menu after the end card)
   }
   window.addEventListener("scrollDown", onDown);
   window.addEventListener("scrollUp", onUp);
@@ -199,9 +177,7 @@
   // ---------- Input: touch + desktop testing ----------
   document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => setLang(t.dataset.lang)));
   $("home").addEventListener("click", goMenu);
-  $("scene").addEventListener("click", () => play());
-  $("speaker").addEventListener("click", () => play());
-  $("text").addEventListener("click", () => { if (state.page < S[state.story].pages.length) play(); });
+  $("scene").addEventListener("click", () => turn(1));
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "ArrowDown" || e.key === "ArrowRight") onDown();
